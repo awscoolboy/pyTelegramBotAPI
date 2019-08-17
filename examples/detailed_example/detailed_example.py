@@ -1,133 +1,250 @@
-"""
-This is a detailed example using almost every command of the API
-"""
-
+import telebot
+import os
+import requests
+import json
+import urllib.parse
+from flask import Flask
 import time
 
-import telebot
 from telebot import types
 
-TOKEN = '<token_string>'
 
-knownUsers = []  # todo: save these in a file,
-userStep = {}  # so they won't reset every time the bot restarts
+from telebot import util
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-commands = {  # command description used in the "help" command
-    'start'       : 'Get used to the bot',
-    'help'        : 'Gives you information about the available commands',
-    'sendLongText': 'A test using the \'send_chat_action\' command',
-    'getImage'    : 'A test using multi-stage messages, custom keyboard, and media sending'
-}
-
-imageSelect = types.ReplyKeyboardMarkup(one_time_keyboard=True)  # create the image selection keyboard
-imageSelect.add('cock', 'pussy')
-
-hideBoard = types.ReplyKeyboardRemove()  # if sent as reply_markup, will hide the keyboard
+app = Flask(__name__)
 
 
-# error handling if user isn't known yet
-# (obsolete once known users are saved to file, because all users
-#   had to use the /start command and are therefore known to the bot)
-def get_user_step(uid):
-    if uid in userStep:
-        return userStep[uid]
+TOKEN = "982194297:AAE42Miio1m6OI_3KD3QErr9AIJNnZ_tFdg"
+#TOKEN = "831127829:AAFhNrcczj3MvqfTn3Br2L5F8qiDBz6cgzo"
+bot = telebot.AsyncTeleBot(TOKEN)
+headers ={}
+
+status_channel = "@realtimedataresult"
+#status_channel = "@bzappsgroup"
+
+add_request_link = "https://mobogram-a636b.firebaseio.com/advertizment/bot/exam_bot.json"
+
+
+headers["Content-Type"]='application/x-www-form-urlencoded; charset=UTF-8'
+headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+headers["Referer"] = "http://app.neaea.gov.et/"
+headers["Cookie"] = "__RequestVerificationToken=0rxDFg0_Ofd1iF4uI46SFynayOQDI5RXSxVF1hSK6Tk0UBI7rc396UcGomh_phNXelqqnyJmiC9Zhe2yv15zW5tiD-TeiaP0R4avo27N48g1; _gid=GA1.3.967631655.1565681521; _ga=GA1.1.1101697647.1565502014; _ga_KVM895P5HM=GS1.1.1565706743.7.1.1565707915.0"
+headers["X-Requested-With"] = "XMLHttpRequest"
+endpoint = 'http://app.neaea.gov.et/Home/result/'
+
+
+
+add_image= "https://lh3.googleusercontent.com/gr7Ked11EsnSvh824Pn7k4pZKZc7jCDieP2FDi-6SqiMdcMIs1o2pyJ9drK1C75MxeY=s360-rw"
+app_link = "https://play.google.com/store/apps/details?id=com.liteplus.messenger"
+app_desc = "Lite:Plus Messenger is an unofficial messaging app that uses Telegram's API."
+
+
+
+# def download_image_and_send(url, name,synop,chat_id,num):
+#     fullname = str(name) + ".jpg"
+#     r = requests.get(url, allow_redirects=True)
+#     open(fullname, 'wb').write(r.content)
+#     photo = open(fullname, 'rb')
+#
+#     #start
+#
+#     keyboard = types.InlineKeyboardMarkup()
+#     callback_button = types.InlineKeyboardButton(text="Downlod", callback_data="")
+#     types.InlineKeyboardButton(text="Hello", callback_data="")
+#
+#     keyboard.add(callback_button)
+#
+#     bot.send_message(chat_id,"You hart for take away",reply_markup=keyboard)
+#
+#     #end
+#
+
+
+    # bot.send_photo(chat_id, photo, caption=synop,reply_markup=reply_markup)
+    # if os.path.isfile(fullname):
+    #     os.remove(fullname)
+    # else:
+    #     print("Error: %s file not found")
+    # file1 = open("statics.txt", "w+")
+    # file1.write(url + ",chat_id_" + str(chat_id) + ",reg_num_" + str(num))
+    # bot.send_message(status_channel,url + ",chat_id_" + str(chat_id) + ",reg_num_" + str(num))
+    # file1.write("\n")
+    # file1.close()
+
+
+
+
+
+def doRequest(number,chat_id):
+    try:
+       params = {'Registration_Number': str(number),
+          '__RequestVerificationToken': '2TJSVSh_-Vn_WIHE-Pa6HMmjJcJLto67qEZuc9oSmG7q7waDoh_DMOb0gHWveUy0j-KFaBtSrwFly8-kLBF8EseYQ2u1chslGjsNp2mlR1U1'}
+       data = urllib.parse.urlencode(params, doseq=True)
+       r = requests.post(url=endpoint, data=data, headers=headers)
+       d = json.loads(r.text)
+       sex = d["s"]["s"]
+       if sex == "Female":
+           sex += " 👧"
+       elif sex == "Male":
+           sex += " 👦"
+       school = d['s']['sc'] + " 🏫"
+       keyboard = types.InlineKeyboardMarkup(row_width=2)
+       keyboard.add(
+           types.InlineKeyboardButton(text="Name", callback_data="1"),
+           types.InlineKeyboardButton(text=d["s"]["fn"], callback_data="2"),
+           types.InlineKeyboardButton(text="Sex", callback_data="3"),
+           types.InlineKeyboardButton(text=sex, callback_data="4"),
+           types.InlineKeyboardButton(text="School", callback_data="5"),
+           types.InlineKeyboardButton(text=school, callback_data="6"),
+           types.InlineKeyboardButton(text="Stream", callback_data="7"),
+           types.InlineKeyboardButton(text=d["s"]["st"], callback_data="8")
+       )
+       mark = d['m']
+       im_link = "http://app.neaea.gov.et" + str(d['s']['ph']).replace("~", "").strip().replace(" ","%20")
+       total=0
+       for k, v in mark.items():
+         total += v
+         keyboard.add(
+         types.InlineKeyboardButton(text=str(k), callback_data=str(k)),
+         types.InlineKeyboardButton(text=str(v), callback_data=(str(v))))
+
+       keyboard.add(
+          types.InlineKeyboardButton(text="Total 🔥🔥🔥", callback_data="100"),
+          types.InlineKeyboardButton(text=str(total), callback_data="102")
+       )
+
+
+       moti_message = ""
+       if total >= 600:
+          moti_message ="😱 Genius"
+       elif total<600 and total>=500:
+           moti_message = "😄 Intelligent"
+       elif total <500 and total>=400:
+           moti_message = "👍 Great"
+       elif total < 400 and total >= 300:
+           moti_message = "😏 Not bad"
+       elif total < 300 and total >= 200:
+           moti_message = "😢"
+       elif total < 200:
+           moti_message = "😜"
+
+
+
+
+       types.InlineKeyboardMarkup(row_width=1)
+       keyboard.add(types.InlineKeyboardButton(text=moti_message, callback_data="1006"))
+       keyboard.add(types.InlineKeyboardButton(text="YOUR RANK IN SCHOOL", callback_data="1006",url= "https://t.me/ShillionerBot?start=r0952840102"))
+
+
+       # types.InlineKeyboardMarkup(row_width=2)
+       keyboard.add(types.InlineKeyboardButton(text="SPONSOR 1", callback_data="1008",url= "https://t.me/joinchat/AAAAAEdAo9uAHlnBbjKdxg"))
+       keyboard.add(types.InlineKeyboardButton(text="SPONSOR 2", callback_data="1009",url= "https://t.me/joinchat/AAAAAEHerPG0OpTJJM-WxA"))
+
+       keyboard.add(types.InlineKeyboardButton(text="For Advertisement 😎", callback_data="156",url= "https://t.me/awscoolboy"))
+       # keyboard.add(types.InlineKeyboardButton(text="Admin 😎", callback_data="15678",url= "https://t.me/awscoolboy"))
+
+
+       name = "photo"
+       fullname = str(name) + ".jpg"
+       r = requests.get(im_link, allow_redirects=True)
+       open(fullname, 'wb').write(r.content)
+       photo = open(fullname, 'rb')
+       bot.send_photo(chat_id, photo, reply_markup=keyboard)
+       if os.path.isfile(fullname):
+           os.remove(fullname)
+       else:
+           print("Error: %s file not foun")
+
+
+
+       #download_image_and_send(im_link,"photo",str(final_mess),chat_id,number)
+       #download_image_and_send_add(add_image,chat_id)
+    except:
+        pass
+
+
+def is_number(s):
+    try:
+        float(s) # for int, long and float
+    except ValueError:
+        try:
+            complex(s) # for complex
+        except ValueError:
+            return False
+
+    return True
+
+
+def sendAddVertizment(chat_id,message):
+    # reqest for add
+    r = requests.get(add_request_link, allow_redirects=True)
+    d = json.loads(r.text)
+
+    app_name = d['app_name']
+    app_link = d['app_link']
+    bot_text = d['bot_text']
+    app_desc = d['app_desc']
+    app_logo = d['app_logo']
+
+    add_message = app_name + "\n\n" + app_desc
+
+    keyboard = types.InlineKeyboardMarkup(row_width=2)
+    keyboard.add(types.InlineKeyboardButton(text=bot_text, callback_data="89", url=app_link))
+
+    name = "addphoto"
+    fullname = name
+    r = requests.get(app_logo, allow_redirects=True)
+    open(fullname, 'wb').write(r.content)
+    photo = open(fullname, 'rb')
+    bot.send_photo(chat_id=chat_id, caption=add_message, photo=photo, reply_markup=keyboard)
+    if os.path.isfile(fullname):
+        os.remove(fullname)
     else:
-        knownUsers.append(uid)
-        userStep[uid] = 0
-        print("New user detected, who hasn't used \"/start\" yet")
-        return 0
+        print("Error: %s file not foun")
 
 
-# only used for console output now
-def listener(messages):
-    """
-    When new messages arrive TeleBot will call this function.
-    """
-    for m in messages:
-        if m.content_type == 'text':
-            # print the sent message to the console
-            print(str(m.chat.first_name) + " [" + str(m.chat.id) + "]: " + m.text)
+    bot.send_message(status_channel, "chat_id_" + str(message.chat.id) + ",reg_num_" + str(message.text))
+    time.sleep(10)
+    bot.send_message(message.chat.id, "Getting your result ... ")
+    doRequest(message.text, message.chat.id)
 
 
-bot = telebot.TeleBot(TOKEN)
-bot.set_update_listener(listener)  # register listener
+def parseResult(message):
+    sendAddVertizment(message.chat.id,message)
 
 
-# handle the "/start" command
-@bot.message_handler(commands=['start'])
-def command_start(m):
-    cid = m.chat.id
-    if cid not in knownUsers:  # if user hasn't used the "/start" command yet:
-        knownUsers.append(cid)  # save user id, so you could brodcast messages to all users of this bot later
-        userStep[cid] = 0  # save user id and his current "command level", so he can use the "/getImage" command
-        bot.send_message(cid, "Hello, stranger, let me scan you...")
-        bot.send_message(cid, "Scanning complete, I know you now")
-        command_help(m)  # show the new user the help page
+
+
+@bot.message_handler(func=lambda m: True)
+def sendReutl(message):
+    if message.text == "/start" or message.text == "/help":
+        bot.send_message(message.chat.id, "Send me your admission number")
+    elif(is_number(message.text)) and len(message.text)==6:
+        parseResult(message)
     else:
-        bot.send_message(cid, "I already know you, no need for me to scan you again!")
+        bot.send_message(message.chat.id,"Wrong input! Send the correct admission number!")
 
 
-# help page
-@bot.message_handler(commands=['help'])
-def command_help(m):
-    cid = m.chat.id
-    help_text = "The following commands are available: \n"
-    for key in commands:  # generate help text out of the commands dictionary defined at the top
-        help_text += "/" + key + ": "
-        help_text += commands[key] + "\n"
-    bot.send_message(cid, help_text)  # send the generated help page
 
 
-# chat_action example (not a good one...)
-@bot.message_handler(commands=['sendLongText'])
-def command_long_text(m):
-    cid = m.chat.id
-    bot.send_message(cid, "If you think so...")
-    bot.send_chat_action(cid, 'typing')  # show the bot "typing" (max. 5 secs)
-    time.sleep(3)
-    bot.send_message(cid, ".")
 
 
-# user can chose an image (multi-stage command example)
-@bot.message_handler(commands=['getImage'])
-def command_image(m):
-    cid = m.chat.id
-    bot.send_message(cid, "Please choose your image now", reply_markup=imageSelect)  # show the keyboard
-    userStep[cid] = 1  # set the user to the next step (expecting a reply in the listener now)
+
+#removed
 
 
-# if the user has issued the "/getImage" command, process the answer
-@bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 1)
-def msg_image_select(m):
-    cid = m.chat.id
-    text = m.text
-
-    # for some reason the 'upload_photo' status isn't quite working (doesn't show at all)
-    bot.send_chat_action(cid, 'typing')
-
-    if text == "cock":  # send the appropriate image based on the reply to the "/getImage" command
-        bot.send_photo(cid, open('rooster.jpg', 'rb'),
-                       reply_markup=hideBoard)  # send file and hide keyboard, after image is sent
-        userStep[cid] = 0  # reset the users step back to 0
-    elif text == "pussy":
-        bot.send_photo(cid, open('kitten.jpg', 'rb'), reply_markup=hideBoard)
-        userStep[cid] = 0
-    else:
-        bot.send_message(cid, "Don't type bullsh*t, if I give you a predefined keyboard!")
-        bot.send_message(cid, "Please try again")
+#bot.polling()
 
 
-# filter on a specific message
-@bot.message_handler(func=lambda message: message.text == "hi")
-def command_text_hi(m):
-    bot.send_message(m.chat.id, "I love you too!")
 
+if __name__ == "__main__":
+    app.run()
+else:
+    application = app
 
-# default handler for every other text
-@bot.message_handler(func=lambda message: True, content_types=['text'])
-def command_default(m):
-    # this is the standard reply to a normal message
-    bot.send_message(m.chat.id, "I don't understand \"" + m.text + "\"\nMaybe try the help page at /help")
-
-
-bot.polling()
+@app.route('/start/thisissdtupid10134557')
+def hello():
+    while True:
+        bot.polling()
+        time.sleep(5)
